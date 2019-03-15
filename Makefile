@@ -1,11 +1,8 @@
 # Makefile  jbgg  v0.01 #
 
-
-
-PROG=pe64-001.exe
-OBJ= pe64-001.o
-LINKSCRIPT=pe64-001.ld
-
+PROG=pe64.exe
+OBJ= pe64.o
+LINKSCRIPT=pe64.ld
 
 CC=gcc
 CFLAGS= 
@@ -14,18 +11,17 @@ LDFLAGS=
 
 all : $(PROG)
 
-
-
 %.o : %.S
-	$(CC) -m64 -c $(CFLAGS) -o $@ $<
+	$(CC) -m64 -c -nostdinc -Iinclude $(CFLAGS) -o $@ $<
 
-$(PROG) : $(OBJ)
-	$(LD) $(LDFLAGS) -T $(LINKSCRIPT) -o $(PROG) $(OBJ)
+$(PROG) : $(OBJ) $(LINKSCRIPT)
+	$(LD) $(LDFLAGS) -nostdlib -T $(LINKSCRIPT) -o $(PROG) $(OBJ)
 
 hex : $(PROG)
 	hexdump -C $(PROG) | less
 
 clean :
 	rm -rf $(PROG) $(OBJ)
+	@rm -rf *~ .*~ include/*~ include/.*~
 
 
