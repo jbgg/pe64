@@ -65,8 +65,8 @@ opthdr:
     .long 0x0
     .long 0x0
     /* import table */
-    .long 0x0
-    .long 0x0
+    .long RVA(importtable)
+    .long importtable_end - importtable
     /* resource table */
     .long 0x0
     .long 0x0
@@ -98,8 +98,8 @@ opthdr:
     .long 0x0
     .long 0x0
     /* IAT */
-    .long 0x0
-    .long 0x0
+    .long RVA(IAT)
+    .long IAT_end - IAT
     /* delay import descr */
     .long 0x0
     .long 0x0
@@ -132,12 +132,23 @@ hdr_end:
     .section .text
     .globl text_beg
 text_beg:
-    .long .
+    .p2align 0x4,,10
+    .p2align 0x3
 _start:
-    mov int1, %rax
-    mov %rax, int2
-    mov int2, %rax
+    sub $0x20, %rsp
+    
+    lea str1(%rip), %rcx
+    call printf_f
+    
+    add $0x20, %rsp
+    lea int2(%rip), %rax
+    mov (%rax), %eax
     ret
+
+    .p2align 0x4,,10
+    .p2align 0x3
+printf_f:
+    jmp *printf(%rip)
 
     .align FILEALIGN, 0x00
 text_end:
@@ -146,10 +157,43 @@ text_end:
     /* .data section */
     .section .data
 data_beg:
-int1:  .long 0x2
+str1:   .asciz "Hello world\n"
 
-    .long bss_fsize
+    .p2align 0x3
+importtable:
+    .long RVA(msvcrt_ilt)
+    .long 0x0
+    .long 0x0
+    .long RVA(msvcrt_hintname)
+    .long RVA(msvcrt_ilt)
+    
+    .long 0x0
+    .long 0x0
+    .long 0x0
+    .long 0x0
+    .long 0x0
 
+importtable_end:
+IAT:
+msvcrt_ilt:
+printf:
+    .quad RVA(printf_hintname)
+    .quad 0x0
+
+msvcrt_ilt_end:
+IAT_end:
+
+hintnamestable:
+    .p2align 0x1
+msvcrt_hintname:
+    .asciz "msvcrt.dll"
+    .p2align 0x1
+printf_hintname:
+    .word 0x0
+    .asciz "printf"
+    .p2align 0x1
+hintnamestable_end:
+   
     .align FILEALIGN, 0x00
 data_end:
 
@@ -157,7 +201,8 @@ data_end:
     /* .bss section */
     .section .bss
 bss_beg:
-    .comm int2, 0x4
+int2:
+    . = . + 4;
 
     .align FILEALIGN, 0x00
 bss_end:
