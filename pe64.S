@@ -135,20 +135,28 @@ text_beg:
     .p2align 0x4,,10
     .p2align 0x3
 _start:
+    push %rbp
+    mov %rsp, %rbp
     sub $0x20, %rsp
     
-    lea str1(%rip), %rcx
-    call printf_f
+    xor %r9, %r9
+    lea title(%rip), %r8
+    lea msg(%rip), %rdx
+    xor %rcx, %rcx
+    call MessageBoxA_f
+
+    mov $0, %rcx
+    call ExitProcess_f
     
-    add $0x20, %rsp
-    lea int2(%rip), %rax
-    mov (%rax), %eax
-    ret
+    .p2align 0x4,,10
+    .p2align 0x3
+MessageBoxA_f:
+    jmp *MessageBoxA(%rip)
 
     .p2align 0x4,,10
     .p2align 0x3
-printf_f:
-    jmp *printf(%rip)
+ExitProcess_f:
+    jmp *ExitProcess(%rip)
 
     .align FILEALIGN, 0x00
 text_end:
@@ -157,15 +165,23 @@ text_end:
     /* .data section */
     .section .data
 data_beg:
-str1:   .asciz "Hello world\n"
+msg:    .asciz "Program created from scratch"
+title:  .asciz "Welcome"
 
     .p2align 0x3
 importtable:
-    .long RVA(msvcrt_ilt)
+
+    .long RVA(user32_iat)
     .long 0x0
     .long 0x0
-    .long RVA(msvcrt_hintname)
-    .long RVA(msvcrt_ilt)
+    .long RVA(user32_hintname)
+    .long RVA(user32_iat)
+
+    .long RVA(kernel32_iat)
+    .long 0x0
+    .long 0x0
+    .long RVA(kernel32_hintname)
+    .long RVA(kernel32_iat)
     
     .long 0x0
     .long 0x0
@@ -174,29 +190,40 @@ importtable:
     .long 0x0
 
 importtable_end:
-IAT:
-msvcrt_ilt:
-printf:
-    .quad RVA(printf_hintname)
-    .quad 0x0
 
-msvcrt_ilt_end:
+IAT:
+user32_iat:
+MessageBoxA:
+    .quad RVA(MessageBoxA_hintname)
+    .quad 0x0
+user32_iat_end:
+kernel32_iat:
+ExitProcess:
+    .quad RVA(ExitProcess_hintname)
+    .quad 0x0
+kernel32_iat_end:
 IAT_end:
 
 hintnamestable:
     .p2align 0x1
-msvcrt_hintname:
-    .asciz "msvcrt.dll"
+user32_hintname:
+    .asciz "user32.dll"
     .p2align 0x1
-printf_hintname:
+MessageBoxA_hintname:
     .word 0x0
-    .asciz "printf"
+    .asciz "MessageBoxA"
+    .p2align 0x1
+kernel32_hintname:
+    .asciz "kernel32.dll"
+    .p2align 0x1
+ExitProcess_hintname:
+    .word 0x0
+    .asciz "ExitProcess"
     .p2align 0x1
 hintnamestable_end:
    
     .align FILEALIGN, 0x00
 data_end:
-
 
     /* .bss section */
     .section .bss
